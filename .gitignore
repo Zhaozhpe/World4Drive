@@ -3,3 +3,17 @@ show_dirs
 *__pycache__*
 test_dataloader_*
 *.onnx
+data/
+depth/
+.history/
+*.json
+*.txt
+*.pth
+*.png
+*.txt
+img/
+media/
+data/
+onnx/
+get_nuplan.py
+get_fps.py

@@ -10,6 +10,10 @@ import mmcv
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
+import pickle
+import gzip
+import os
+import pickle
 
 try:
     from mmcv.utils import Config, DictAction
@@ -37,7 +41,9 @@ def parse_args():
     parser.add_argument('--options', nargs='+', action=DictAction, help='custom options')
     parser.add_argument('--launcher', choices=['None', 'pytorch', 'slurm', 'mpi', 'ror'], default='slurm', help='job launcher')
     parser.add_argument('--test_data_path', default='None', type=str, help='the path of test data')
-    parser.add_argument('--batch_size', default=1, type=int, help='the batch size for inference')
+    parser.add_argument('--batch_size', default=6, type=int, help='the batch size for inference')
+    parser.add_argument('--begin', default=1, type=int, help='the batch size for inference')
+    parser.add_argument('--end', default=1, type=int, help='the batch size for inference')
     args = parser.parse_args()
     return args
 
@@ -90,15 +96,19 @@ def main(args):
     logger.info(f'Distributed training: {cfg.distributed}')
     
     # dump config 
+    test_data = []
     cfg.dump(osp.join(cfg.show_dir, osp.basename(args.config)))
+
     test_data_path = args.test_data_path
-    if not os.path.isabs(test_data_path):
-        test_data_path = osp.join(CODE_SPACE, test_data_path)
 
     if 'json' in test_data_path:
         test_data = load_from_annos(test_data_path)
     else:
         test_data = load_data(args.test_data_path)
+    if args.end > len(test_data):
+        args.end = len(test_data)
+    print(len(test_data))
+    test_data = test_data[args.begin: args.end]
     
     if not cfg.distributed:
         main_worker(0, cfg, args.launcher, test_data)
@@ -153,6 +163,8 @@ def main_worker(local_rank: int, cfg: dict, launcher: str, test_data: list):
         local_rank,
         cfg.batch_size,
     )
+    
+        
     
 if __name__ == '__main__':
     args = parse_args()
