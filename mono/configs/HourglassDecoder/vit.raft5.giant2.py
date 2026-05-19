@@ -31,3 +31,5 @@ data_basic=dict(
 
 batchsize_per_gpu = 1
 thread_per_gpu = 1
+
+del np

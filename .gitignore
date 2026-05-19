@@ -17,3 +17,4 @@ data/
 onnx/
 get_nuplan.py
 get_fps.py
+vit/

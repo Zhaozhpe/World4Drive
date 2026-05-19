@@ -2,7 +2,7 @@ import pickle
 from tqdm import tqdm
 import json
 # 读取pickle
-pickle_path = "/data11/zyp/Driving/TOD3Cap/tod3cap_camera/data/nuscenes/nuscenes_infos_val.pkl"
+pickle_path = "/home/csgrad/zzhao43/world_model/World4Drive/data/nuscenes/vad_nuscenes_infos_temporal_val.pkl"
 with open(pickle_path, 'rb') as f:
     infos = pickle.load(f)
 

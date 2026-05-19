@@ -21,6 +21,16 @@ from torch.nn.init import trunc_normal_
 import torch.nn.init
 import torch.nn.functional as F
 
+# ---- ADD THIS PATCH TO FIX THE UNPICKLE ERROR ----
+if not hasattr(torch._tensor, '_rebuild_from_type_v2'):
+    def _rebuild_from_type_v2(func, new_type, args, state):
+        ret = func(*args)
+        ret.__class__ = new_type
+        ret.__dict__.update(state)
+        return ret
+    torch._tensor._rebuild_from_type_v2 = _rebuild_from_type_v2
+# --------------------------------------------------
+
 #from dinov2.layers import Mlp, PatchEmbed, SwiGLUFFNFused, MemEffAttention, NestedTensorBlock as Block
 
 logger = logging.getLogger("dinov2")
@@ -925,7 +935,7 @@ class DinoVisionTransformer(nn.Module):
             patch_pos_embed.reshape(1, int(sqrt_N), int(sqrt_N), dim).permute(0, 3, 1, 2),
             scale_factor=(sx, sy),
             mode="bicubic",
-            antialias=self.interpolate_antialias,
+            # antialias=self.interpolate_antialias,
         )
 
         assert int(w0) == patch_pos_embed.shape[-2]
@@ -1105,14 +1115,15 @@ def init_weights_vit_timm(module: nn.Module, name: str = ""):
 
 
 def load_ckpt_dino(checkpoint, model):
+    print(f"Loading checkpoint from {checkpoint}")
     if checkpoint is not None:
-        try:
-            with open(checkpoint, "rb") as f:
-                state_dict = torch.load(f)
-        except:
-            print('NO pretrained imagenet ckpt available! Check your path!')
-            del model.mask_token
-            return
+        # try:
+        with open(checkpoint, "rb") as f:
+            state_dict = torch.load(f)
+        # except:
+        #     print('NO pretrained imagenet ckpt available! Check your path!')
+        #     del model.mask_token
+        #     return
 
         try:
             model.load_state_dict(state_dict, strict=True)

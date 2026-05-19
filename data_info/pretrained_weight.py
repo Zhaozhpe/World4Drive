@@ -2,7 +2,7 @@
 mldb_info={}
 
 mldb_info['checkpoint']={
-    'mldb_root': '/mnt/nas/share/home/xugk/ckpt', # NOTE: modify it to the pretrained ckpt root
+    'mldb_root': '/home/csgrad/zzhao43/world_model/World4Drive', # NOTE: modify it to the pretrained ckpt root
 
     # pretrained weight for convnext
     'convnext_tiny': 'convnext/convnext_tiny_22k_1k_384.pth',

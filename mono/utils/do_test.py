@@ -385,7 +385,8 @@ def postprocess_per_image(i, pred_depth, gt_depth, intrinsic, rgb_origin, normal
     # pcd
     pred_depth = pred_depth.detach().cpu().numpy()
     # TODO: yangpx modify
-    save_path = os.path.join("/data41/zyp/Driving/exp_rebuttal_small/depth_gaussian", an['filename'].replace(".jpg", ".npy"))    # save_path = an['intrinsic'].replace(".gz", "_right.npy")
+    os.makedirs("/home/csgrad/zzhao43/world_model/World4Drive/data/depth_gaussian", exist_ok=True)
+    save_path = os.path.join("/home/csgrad/zzhao43/world_model/World4Drive/data/depth_gaussian", an['filename'].replace(".jpg", ".npy"))    # save_path = an['intrinsic'].replace(".gz", "_right.npy")
     # depth = np.load(save_path)
     # depth_check = depth.astype(np.int16)
     # pred_depth_check = pred_depth.astype(np.int16)
