@@ -3,7 +3,8 @@ from tqdm import tqdm
 import json
 import os
 # 读取pickle
-pickle_path = "/home/csgrad/zzhao43/world_model/World4Drive/data/nuscenes/vad_nuscenes_infos_temporal_val.pkl"
+# pickle_path = "/home/csgrad/zzhao43/world_model/World4Drive/data/nuscenes/vad_nuscenes_infos_temporal_val.pkl"
+pickle_path = "/home/csgrad/zzhao43/world_model/World4Drive/data/nuscenes/vad_nuscenes_infos_temporal_train.pkl"
 with open(pickle_path, 'rb') as f:
     infos = pickle.load(f)
 
@@ -28,5 +29,8 @@ save_dict = {}
 save_dict['files'] = file_list
 print(f"Total samples: {len(file_list)}")
 # 存json
-with open('nuscenes_val.json', 'w') as f:
+# with open('nuscenes_val.json', 'w') as f:
+#     json.dump(save_dict, f)
+
+with open('nuscenes_train.json', 'w') as f:
     json.dump(save_dict, f)

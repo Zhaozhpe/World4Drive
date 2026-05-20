@@ -1,7 +1,16 @@
+# CUDA_VISIBLE_DEVICES=7 python mono/tools/test_scale_cano.py \
+#     'mono/configs/HourglassDecoder/vit.raft5.giant2.py' \
+#     --load-from weight/metric_depth_vit_giant2_800k.pth \
+#     --test_data_path nuscenes_val.json \
+#     --launcher None \
+#     --batch_size 1 \
+#     --begin 0 \
+#     --end 1000000
+
 CUDA_VISIBLE_DEVICES=7 python mono/tools/test_scale_cano.py \
     'mono/configs/HourglassDecoder/vit.raft5.giant2.py' \
     --load-from weight/metric_depth_vit_giant2_800k.pth \
-    --test_data_path nuscenes_val.json \
+    --test_data_path nuscenes_train.json \
     --launcher None \
     --batch_size 1 \
     --begin 0 \
