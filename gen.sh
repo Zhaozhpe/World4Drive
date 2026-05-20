@@ -5,7 +5,7 @@ CUDA_VISIBLE_DEVICES=7 python mono/tools/test_scale_cano.py \
     --launcher None \
     --batch_size 1 \
     --begin 0 \
-    --end 100
+    --end 1000000
 
 # CUDA_VISIBLE_DEVICES=0 python mono/tools/test_scale_cano.py \
 #     'mono/configs/HourglassDecoder/convtiny.0.3_150.py' \
