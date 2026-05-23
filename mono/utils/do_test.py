@@ -19,6 +19,14 @@ import time
 
 from mono.utils.unproj_pcd import reconstruct_pcd, save_point_cloud
 
+DEPTH_GAUSSIAN_DIR = "/home/csgrad/zzhao43/world_model/World4Drive/data/depth_gaussian"
+
+
+def get_depth_save_path(sample: dict, output_dir: str) -> str:
+    filename = sample["filename"]
+    base, _ = os.path.splitext(filename)
+    return os.path.join(output_dir, f"{base}.npy")
+
 def to_cuda(data: dict):
     for k, v in data.items():
         if isinstance(v, torch.Tensor):
@@ -253,8 +261,12 @@ def do_scalecano_test_with_custom_data(
     for i in tqdm(range(0, len(test_data), bs)):
         batch_data = test_data[i:i + bs]  # Extract batch
         rgb_inputs, pads, label_scale_factors, gt_depths, rgb_origins = [], [], [], [], []
+        valid_samples = []
         
         for an in batch_data:
+            save_path = get_depth_save_path(an, DEPTH_GAUSSIAN_DIR)
+            if os.path.exists(save_path):
+                continue
             # if os.path.exists(an['intrinsic'].replace(".gz", ".npy")):
             #     continue
             # print(an['rgb'])
@@ -282,6 +294,10 @@ def do_scalecano_test_with_custom_data(
             rgb_inputs.append(rgb_input)
             pads.append(pad)
             label_scale_factors.append(label_scale_factor)
+            valid_samples.append(an)
+
+        if not valid_samples:
+            continue
 
         # Process the batch
         pred_depths, outputs, a, b = get_prediction(
@@ -307,7 +323,7 @@ def do_scalecano_test_with_custom_data(
                 rgb_origins[j],
                 normal_out,
                 pads[j],
-                batch_data[j],
+                valid_samples[j],
                 dam,
                 dam_median,
                 dam_global,
@@ -385,8 +401,8 @@ def postprocess_per_image(i, pred_depth, gt_depth, intrinsic, rgb_origin, normal
     # pcd
     pred_depth = pred_depth.detach().cpu().numpy()
     # TODO: yangpx modify
-    os.makedirs("/home/csgrad/zzhao43/world_model/World4Drive/data/depth_gaussian", exist_ok=True)
-    save_path = os.path.join("/home/csgrad/zzhao43/world_model/World4Drive/data/depth_gaussian", an['filename'].replace(".jpg", ".npy"))    # save_path = an['intrinsic'].replace(".gz", "_right.npy")
+    os.makedirs(DEPTH_GAUSSIAN_DIR, exist_ok=True)
+    save_path = get_depth_save_path(an, DEPTH_GAUSSIAN_DIR)    # save_path = an['intrinsic'].replace(".gz", "_right.npy")
     # depth = np.load(save_path)
     # depth_check = depth.astype(np.int16)
     # pred_depth_check = pred_depth.astype(np.int16)
