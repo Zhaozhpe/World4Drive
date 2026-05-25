@@ -85,7 +85,7 @@ def parse_args():
         choices=['none', 'pytorch', 'slurm', 'mpi'],
         default='none',
         help='job launcher')
-    parser.add_argument('--local-rank', type=int, default=0)
+    parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument(
         '--autoscale-lr',
         action='store_true',
@@ -226,7 +226,7 @@ def main():
     model.init_weights()
     
 
-    logger.info(f'Model:\n{model}')
+    # logger.info(f'Model:\n{model}')
     datasets = [build_dataset(cfg.data.train)]
     if len(cfg.workflow) == 2:
         val_dataset = copy.deepcopy(cfg.data.val)

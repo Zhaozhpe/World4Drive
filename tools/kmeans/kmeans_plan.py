@@ -8,7 +8,7 @@ from sklearn.cluster import KMeans
 
 import mmcv
 
-K = 12
+K = 6
 
 fp = 'data/nuscenes/vad_nuscenes_infos_temporal_train.pkl'
 data = mmcv.load(fp)
@@ -32,8 +32,10 @@ for trajs in navi_trajs:
     clusters.append(cluster)
     for j in range(K):
         plt.scatter(cluster[j, :, 0], cluster[j, :,1])
+os.makedirs('vis/kmeans', exist_ok=True)
 plt.savefig(f'vis/kmeans/plan_{K}', bbox_inches='tight')
 plt.close()
 
 clusters = np.stack(clusters, axis=0)   #[3,6,6,2]
+os.makedirs('data/kmeans', exist_ok=True)
 np.save(f'data/kmeans/kmeans_plan_{K}.npy', clusters)

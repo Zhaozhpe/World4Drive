@@ -6,7 +6,7 @@ from mmdet.datasets.builder import PIPELINES
 from mmcv.parallel import DataContainer as DC
 from custom_mmdet3d.core.bbox import (CameraInstance3DBoxes, DepthInstance3DBoxes,
                                LiDARInstance3DBoxes, box_np_ops)
-MASK_ROOT='/path/to/data/nuscenes_semantic/samples'
+MASK_ROOT='data/nuscenes_semantic/samples'
 SEMANTIC_MAP = np.array([
     0,   # ignore
     4,   # sedan      -> car
@@ -48,7 +48,7 @@ STATIC_MAP=np.array([
 ], dtype=np.int8)
 
 import os
-DEPTH_ROOT="/path/to/data/depth/"  
+DEPTH_ROOT="data/depth_gaussian"  
 
 @PIPELINES.register_module()
 class LoadMultiDepthFromFiles(object):

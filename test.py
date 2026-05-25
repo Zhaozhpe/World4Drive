@@ -291,5 +291,7 @@ def main():
         #     json.dump(metric_all, f2, indent=4)
         # print('save to json done')
 
+    os._exit(0)
+
 if __name__ == '__main__':
     main()

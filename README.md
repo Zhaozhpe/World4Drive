@@ -24,6 +24,8 @@ conda install -c omgarcia gcc-6 # gcc-6.2
 **c. Install mmcv-full.**
 ```shell
 pip install mmcv-full==1.4.0
+# get error using the above command, and use the below one
+pip install mmcv-full==1.4.0 -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9.0/index.html
 
 ```
 
@@ -44,7 +46,11 @@ conda activate w4d
 git clone https://github.com/open-mmlab/mmdetection3d.git
 cd /path/to/mmdetection3d
 git checkout -f v0.17.1
-python setup.py develop
+# install an older version cudatoolkit in the conda env for the compile
+conda install -c conda-forge cudatoolkit-dev=11.1.1
+# and I use the pip because of a lot of dependency errors
+pip install -v -e .
+# python setup.py develop
 ```
 
 **g. Install nuscenes-devkit.**
@@ -56,6 +62,9 @@ pip install yapf==0.40.1
 **h. Install other dependencies.**
 ```bash
 pip install -r requirements.txt
+# missing einops, mmengine
+pip install einops
+pip install mmengine
 ```
 
 # Data preparation instructions
@@ -71,9 +80,13 @@ For details, please refer to docs/prepare_dataset.md
 # Training
 ```shell
   ./tools/nusc_my_train.sh w4d/default 8
+  # it's strange that i need to manually kill the processes as they are occupying the GPU memory after the crtl+c
+  # pkill -u zzhao43 -9 -f python
+  # tensorboard --logdir=work_dirs/test/tf_logs/ --port=6012
 ```
 
 # Testing
 ```shell
-  ./tools/dist_test $CONFIG $CKPT $NUM_GPU
+  # ./tools/dist_test.sh $CONFIG $CKPT $NUM_GPU
+  ./tools/dist_test.sh w4d/default work_dirs/test/epoch_1.pth 4
 ```
