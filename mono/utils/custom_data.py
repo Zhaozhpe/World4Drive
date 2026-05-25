@@ -16,13 +16,16 @@ def load_from_annos(anno_path):
             intrinsic = anno['cam_in'] if 'cam_in' in anno else None
             normal = anno['normal'] if 'normal' in anno else None
 
+            filename = anno['filename'] if 'filename' in anno else os.path.basename(rgb)
+            folder = anno['folder'] if 'folder' in anno else rgb.split('/')[-2]
             data_i = {
                 'rgb': rgb,
                 'depth': depth,
+                'depth_output': anno.get('depth_output'),
                 'depth_scale': depth_scale,
                 'intrinsic': intrinsic,
-                'filename': os.path.basename(rgb),
-                'folder': rgb.split('/')[-2],
+                'filename': filename,
+                'folder': folder,
                 'normal': normal
             }
             datas.append(data_i)

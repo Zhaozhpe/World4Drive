@@ -18,3 +18,5 @@ onnx/
 get_nuplan.py
 get_fps.py
 vit/
+.dist_test/
+data_world_model/

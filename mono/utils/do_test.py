@@ -19,10 +19,15 @@ import time
 
 from mono.utils.unproj_pcd import reconstruct_pcd, save_point_cloud
 
-DEPTH_GAUSSIAN_DIR = "/home/csgrad/zzhao43/world_model/World4Drive/data/depth_gaussian"
+DEPTH_GAUSSIAN_DIR = os.environ.get(
+    "METRIC3D_DEPTH_OUTPUT_DIR",
+    "/home/csgrad/zzhao43/world_model/World4Drive/data/depth_gaussian",
+)
 
 
 def get_depth_save_path(sample: dict, output_dir: str) -> str:
+    if sample.get("depth_output"):
+        return sample["depth_output"]
     filename = sample["filename"]
     base, _ = os.path.splitext(filename)
     return os.path.join(output_dir, f"{base}.npy")
@@ -382,7 +387,7 @@ def postprocess_per_image(i, pred_depth, gt_depth, intrinsic, rgb_origin, normal
         dam_global.update_metrics_gpu(pred_global, gt_depth, mask, is_distributed)
         print(gt_depth[gt_depth != 0].median() / pred_depth[gt_depth != 0].median(), )
     
-    os.makedirs(osp.join(save_imgs_dir, an['folder']), exist_ok=True)
+    os.makedirs(osp.dirname(osp.join(save_imgs_dir, an['filename'])), exist_ok=True)
     rgb_torch = torch.from_numpy(rgb_origin).to(pred_depth.device).permute(2, 0, 1)
     mean = torch.tensor([123.675, 116.28, 103.53]).float()[:, None, None].to(rgb_torch.device)
     std = torch.tensor([58.395, 57.12, 57.375]).float()[:, None, None].to(rgb_torch.device)
@@ -403,6 +408,7 @@ def postprocess_per_image(i, pred_depth, gt_depth, intrinsic, rgb_origin, normal
     # TODO: yangpx modify
     os.makedirs(DEPTH_GAUSSIAN_DIR, exist_ok=True)
     save_path = get_depth_save_path(an, DEPTH_GAUSSIAN_DIR)    # save_path = an['intrinsic'].replace(".gz", "_right.npy")
+    os.makedirs(osp.dirname(save_path), exist_ok=True)
     # depth = np.load(save_path)
     # depth_check = depth.astype(np.int16)
     # pred_depth_check = pred_depth.astype(np.int16)
