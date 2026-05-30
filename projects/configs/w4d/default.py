@@ -80,6 +80,7 @@ model = dict(
         use_wm=True,
         num_traj_modal=3,
         num_spatial_token=240, # origin 240
+        motion_anchor_path='data/kmeans/kmeans_plan_6.npy',
         ),
     )
 

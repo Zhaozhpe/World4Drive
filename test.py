@@ -62,7 +62,7 @@ def parse_args():
     parser.add_argument(
         '--show-dir', help='directory where results will be saved')
     parser.add_argument(
-        '--gpu-collect',
+        '--gpu_collect',
         action='store_true',
         help='whether to use gpu to collect results.')
     parser.add_argument(

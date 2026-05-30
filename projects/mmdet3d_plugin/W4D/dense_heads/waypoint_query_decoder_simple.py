@@ -50,6 +50,7 @@ class SimpleWayDecoderHead(BaseModule):
                 num_tf_layers=3,
                 num_traj_modal=1,   # cfg is 3, 3 for 3 cmd
                 num_mode=6, # 6 for 6 mode
+                motion_anchor_path=None,
                 **kwargs,
                 ):
         """
@@ -209,7 +210,11 @@ class SimpleWayDecoderHead(BaseModule):
             nn.ReLU(inplace=True),
             nn.Linear(hidden_channel, hidden_channel),)
         
-        ego_motion_mode_ref = np.load('data/kmeans/kmeans_plan_6.npy')
+        assert motion_anchor_path is not None, 'motion_anchor_path must be provided for waypoint query decoder head'
+        ego_motion_mode_ref = np.load(motion_anchor_path)
+        expected_shape = (num_traj_modal, num_mode, num_proposals, 2)
+        assert ego_motion_mode_ref.shape == expected_shape, \
+            f'motion anchors at {motion_anchor_path} have shape {ego_motion_mode_ref.shape}, expected {expected_shape}'
         self.waypoint_mode_ref = nn.Parameter(
             torch.tensor(ego_motion_mode_ref, dtype=torch.float32),
             requires_grad=False,
