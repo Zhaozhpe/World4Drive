@@ -15,6 +15,8 @@ python get_nusc.py
 # weight/metric_depth_vit_large_800k.pth
 
 sh gen.sh
+
+# if you find any corrupt files, please refer to ./tools/repair_corrupt_depth.py to scan and repair them
 ```
 
 ## 📧 Citation
