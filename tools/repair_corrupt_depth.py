@@ -13,6 +13,9 @@ python tools/repair_corrupt_depth.py --dry-run
 # Run full repair by default
 python tools/repair_corrupt_depth.py --gpu 7
 
+# Resume from an existing report/manifest without scanning again
+python tools/repair_corrupt_depth.py --resume --gpu 7
+
 # Only scan/repair val:
 python tools/repair_corrupt_depth.py \
   --ann-files data/nuscenes/vad_nuscenes_infos_temporal_val.pkl \
@@ -72,8 +75,9 @@ def collect_bad_depths(args):
     checked = 0
 
     for ann_file in args.ann_files:
-        for info_idx, info in enumerate(load_infos(Path(ann_file))):
-            print(f'[scan] info_idx={info_idx}/{len(load_infos(Path(ann_file)))}', end='\r')
+        infos = load_infos(Path(ann_file))
+        for info_idx, info in enumerate(infos):
+            print(f'[scan] {ann_file} info_idx={info_idx}/{len(infos)}', end='\r')
             for cam in CAMERAS:
                 cam_info = info['cams'][cam]
                 image_path = cam_info['data_path']
@@ -121,25 +125,58 @@ def write_json(path, records):
         json.dump(payload, f, indent=2)
 
 
-def backup_bad_outputs(records):
+def load_records_from_report(report_path):
+    with open(report_path, 'r', encoding='utf-8') as f:
+        report = json.load(f)
+    return report.get('checked', 0), report.get('bad', [])
+
+
+def load_records_from_manifest(manifest_path):
+    with open(manifest_path, 'r', encoding='utf-8') as f:
+        manifest = json.load(f)
+    records = []
+    for item in manifest.get('files', []):
+        records.append(dict(
+            depth_output=item['depth_output'],
+            rgb=item['rgb'],
+            cam_in=item['cam_in'],
+            depth_scale=item.get('depth_scale', 256.0),
+            reason='loaded_from_manifest',
+        ))
+    return 0, records
+
+
+def backup_bad_outputs(records, expected_shape):
     for record in records:
         path = Path(record['depth_output'])
         if not path.exists():
             continue
+        if record.get('backup'):
+            continue
+        reason = check_depth(path, expected_shape)
+        if reason is None:
+            continue
+        record['reason'] = reason
         backup = path.with_suffix(path.suffix + f'.corrupt.{int(time.time())}')
         path.rename(backup)
         record['backup'] = str(backup)
 
 
 def run_regeneration(args, manifest_path):
+    repo_root = Path(__file__).resolve().parents[1]
+    script_path = repo_root / 'mono/tools/test_scale_cano.py'
+    if not script_path.exists():
+        raise FileNotFoundError(
+            f'{script_path} does not exist. Switch to the data branch before '
+            f'running regeneration, or use --dry-run/--resume later.')
     cmd = [
         sys.executable,
-        'mono/tools/test_scale_cano.py',
+        str(script_path),
         args.config,
         '--load-from',
         args.checkpoint,
         '--test_data_path',
-        str(manifest_path),
+        str(Path(manifest_path).resolve()),
         '--launcher',
         'None',
         '--batch_size',
@@ -152,7 +189,7 @@ def run_regeneration(args, manifest_path):
     env = os.environ.copy()
     if args.gpu is not None:
         env['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
-    subprocess.run(cmd, check=True, env=env)
+    subprocess.run(cmd, check=True, env=env, cwd=str(repo_root))
 
 
 def main():
@@ -179,19 +216,36 @@ def main():
                         help='Optional end value passed to Metric3D. Defaults to all manifest entries.')
     parser.add_argument('--dry-run', action='store_true',
                         help='Only write report/manifest; do not move files or run Metric3D.')
+    parser.add_argument('--resume', action='store_true',
+                        help='Reuse existing report/manifest and skip scanning depth files.')
     args = parser.parse_args()
 
-    checked, records = collect_bad_depths(args)
     Path(args.report).parent.mkdir(parents=True, exist_ok=True)
     Path(args.manifest).parent.mkdir(parents=True, exist_ok=True)
 
-    with open(args.report, 'w', encoding='utf-8') as f:
-        json.dump(dict(checked=checked, bad_count=len(records), bad=records), f, indent=2)
-    write_json(args.manifest, records)
+    if args.resume:
+        if Path(args.report).exists():
+            checked, records = load_records_from_report(args.report)
+            print(f'loaded existing report: {args.report}')
+        elif Path(args.manifest).exists():
+            checked, records = load_records_from_manifest(args.manifest)
+            print(f'loaded existing manifest: {args.manifest}')
+        else:
+            raise FileNotFoundError(
+                f'--resume requested, but neither {args.report} nor '
+                f'{args.manifest} exists')
+    else:
+        checked, records = collect_bad_depths(args)
+        with open(args.report, 'w', encoding='utf-8') as f:
+            json.dump(dict(checked=checked, bad_count=len(records), bad=records), f, indent=2)
+        write_json(args.manifest, records)
 
     print(f'checked={checked} bad={len(records)}')
-    print(f'wrote report: {args.report}')
-    print(f'wrote Metric3D manifest: {args.manifest}')
+    if args.resume:
+        print('resume: skipped depth scan')
+    else:
+        print(f'wrote report: {args.report}')
+        print(f'wrote Metric3D manifest: {args.manifest}')
 
     if not records:
         return
@@ -199,9 +253,13 @@ def main():
         print('dry-run: not moving corrupt files or regenerating')
         return
 
-    backup_bad_outputs(records)
+    expected_shape = None if args.expected_shape is None else tuple(args.expected_shape)
+    backup_bad_outputs(records, expected_shape)
+    write_json(args.manifest, records)
     with open(args.report, 'w', encoding='utf-8') as f:
         json.dump(dict(checked=checked, bad_count=len(records), bad=records), f, indent=2)
+    print(f'wrote refreshed report: {args.report}')
+    print(f'wrote refreshed Metric3D manifest: {args.manifest}')
     run_regeneration(args, args.manifest)
 
 
